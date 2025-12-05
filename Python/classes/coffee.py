@@ -20,6 +20,12 @@ class Order:
         self.status = status
         self.endCost = endCost
         
-    def add_drink(self, drink):
-        list = ()
+    def add_drink(self, list):
+        self.list = Drink.show_info()
         
+
+
+capuccino = Drink('Капучино', 'кофе', 200, 'M')
+matcha = Drink('Матча', 'чай', 300, 'M')
+
+print(Order.add_drink)
