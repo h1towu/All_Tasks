@@ -1,104 +1,49 @@
 <!DOCTYPE html>
-<!-- 
-  БРАУЗЕРНЫЙ ESP "ГЕЙМЕР ОВЕРЛЕЙ"
-  Работает даже при блокировке Screen Capture API
-  Использует альтернативные методы анализа
--->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMD Radeon Software - Performance Metrics</title>
+    <title>Game Radar Pro</title>
     <style>
-        /* Упрощенный CSS для быстрой загрузки */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
+            margin: 0; 
+            padding: 0; 
             background: #0a0a0a; 
-            color: #00ff9d; 
+            color: #0af;
             font-family: 'Segoe UI', sans-serif;
             overflow: hidden;
-            height: 100vh;
         }
         
-        .gpu-overlay {
+        #overlay {
             position: fixed;
             top: 10px;
             right: 10px;
-            width: 300px;
-            background: rgba(20, 25, 35, 0.95);
-            border: 1px solid #00a8ff;
-            border-radius: 8px;
-            padding: 12px;
+            width: 320px;
+            background: rgba(20, 25, 40, 0.9);
+            border: 2px solid #0af;
+            border-radius: 10px;
+            padding: 15px;
             z-index: 999999;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
         }
         
-        .overlay-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #00a8ff;
-        }
-        
-        .logo { 
-            width: 24px; 
-            height: 24px; 
-            margin-right: 8px;
-            background: linear-gradient(45deg, #00a8ff, #00ff9d);
-            border-radius: 4px;
-        }
-        
-        .title { 
-            font-size: 14px; 
-            font-weight: 600; 
-            color: #00ff9d;
-        }
-        
-        .metrics { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 8px; 
-            margin-bottom: 12px;
-        }
-        
-        .metric { 
-            background: rgba(10, 15, 25, 0.7);
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(0, 168, 255, 0.3);
-        }
-        
-        .metric-label { 
-            font-size: 10px; 
-            color: #66c2ff; 
-            margin-bottom: 2px;
-        }
-        
-        .metric-value { 
-            font-size: 16px; 
-            font-weight: 700; 
-            color: #00ff9d;
-            font-family: 'Consolas', monospace;
-        }
-        
-        .radar { 
-            width: 150px; 
-            height: 150px; 
-            margin: 0 auto;
+        #radar {
+            width: 200px;
+            height: 200px;
+            margin: 10px auto;
             background: radial-gradient(circle, #0a0f1a 0%, #050810 100%);
+            border: 2px solid #0af;
             border-radius: 50%;
-            border: 2px solid #00a8ff;
             position: relative;
             overflow: hidden;
         }
         
-        .radar-sweep {
+        .sweep {
             position: absolute;
             width: 100%;
             height: 100%;
-            background: conic-gradient(transparent 70%, rgba(0, 255, 157, 0.2) 100%);
-            animation: sweep 3s linear infinite;
+            background: conic-gradient(transparent 70%, rgba(10, 175, 255, 0.3) 100%);
+            animation: sweep 2s linear infinite;
         }
         
         @keyframes sweep {
@@ -108,735 +53,501 @@
         
         .enemy {
             position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #ff3333;
+            width: 10px;
+            height: 10px;
+            background: #f00;
             border-radius: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px #ff3333;
-        }
-        
-        .crosshair {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            pointer-events: none;
-            z-index: 999998;
-        }
-        
-        .crosshair-dot {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 3px;
-            height: 3px;
-            background: #00ff9d;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #f00;
         }
         
         .controls {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            display: flex;
-            gap: 5px;
+            margin-top: 15px;
+            text-align: center;
         }
         
-        .btn {
-            background: rgba(0, 168, 255, 0.2);
-            border: 1px solid #00a8ff;
-            color: #66c2ff;
-            padding: 6px 12px;
-            border-radius: 4px;
+        button {
+            background: #0af;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 11px;
         }
         
-        .btn:hover {
-            background: rgba(0, 168, 255, 0.4);
+        button:hover {
+            background: #08f;
         }
         
-        .hidden { display: none !important; }
+        #status {
+            color: #0f0;
+            font-size: 12px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        #colorPicker {
+            width: 100%;
+            height: 30px;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        
+        .config {
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        label {
+            display: block;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-    <div class="gpu-overlay" id="overlay">
-        <div class="overlay-header">
-            <div class="logo"></div>
-            <div class="title">AMD Performance Metrics</div>
+    <div id="overlay">
+        <h3 style="text-align: center; margin: 0 0 10px 0;">🎮 Game Radar Pro</h3>
+        
+        <div class="config">
+            <label>🔴 Enemy Color: <span id="colorValue">Red</span></label>
+            <input type="color" id="colorPicker" value="#ff0000">
+            
+            <label>🎯 Sensitivity: <span id="sensValue">50</span>%</label>
+            <input type="range" id="sensitivity" min="1" max="100" value="50">
+            
+            <label>📏 Detection Threshold: <span id="threshValue">30</span></label>
+            <input type="range" id="threshold" min="1" max="100" value="30">
         </div>
         
-        <div class="metrics">
-            <div class="metric">
-                <div class="metric-label">FPS</div>
-                <div class="metric-value" id="fps">144</div>
-            </div>
-            <div class="metric">
-                <div class="metric-label">GPU Usage</div>
-                <div class="metric-value" id="gpu">78%</div>
-            </div>
-            <div class="metric">
-                <div class="metric-label">CPU Temp</div>
-                <div class="metric-value" id="temp">62°C</div>
-            </div>
-            <div class="metric">
-                <div class="metric-label">VRAM</div>
-                <div class="metric-value" id="vram">5.1GB</div>
-            </div>
+        <div id="radar">
+            <div class="sweep"></div>
         </div>
         
-        <div style="text-align: center; margin: 10px 0; font-size: 12px; color: #66c2ff;">
-            Game Radar
-        </div>
+        <div id="status">⏳ Ready - Start screen capture</div>
         
-        <div class="radar" id="radar">
-            <div class="radar-sweep"></div>
+        <div class="controls">
+            <button onclick="startCapture()">🖥️ Start Capture</button>
+            <button onclick="toggleOverlay()">👁️ Toggle Overlay</button>
+            <button onclick="calibrate()">🎯 Calibrate</button>
         </div>
-    </div>
-    
-    <div class="crosshair" id="crosshair">
-        <div class="crosshair-dot"></div>
-    </div>
-    
-    <div class="controls">
-        <button class="btn" onclick="toggleOverlay()">Toggle</button>
-        <button class="btn" onclick="calibrate()">Calibrate</button>
     </div>
 
     <script>
-        // === УПРОЩЕННЫЙ БРАУЗЕРНЫЙ ESP ===
-        // Работает даже без Screen Capture API
+        // === КОНФИГУРАЦИЯ ===
+        const CONFIG = {
+            enemyColor: { r: 255, g: 0, b: 0 }, // Красный по умолчанию
+            sensitivity: 50,
+            threshold: 30,
+            updateInterval: 100, // мс
+            minEnemySize: 10,    // минимальный размер кластера
+            game: 'VALORANT'     // или 'CS2', 'APEX', etc
+        };
         
-        class SimpleBrowserESP {
-            constructor() {
-                console.log('[GameOverlay] Initializing...');
-                
-                this.isActive = true;
-                this.enemyPositions = [];
-                this.gameRunning = false;
-                this.analysisMethod = 'color'; // color, audio, network, pattern
-                
-                // Автоматическое определение игры
-                this.detectedGame = null;
-                
-                // Инициализация
-                this.init();
+        // === СОСТОЯНИЕ СИСТЕМЫ ===
+        let state = {
+            isCapturing: false,
+            stream: null,
+            video: null,
+            canvas: null,
+            ctx: null,
+            enemies: [],
+            lastUpdate: 0,
+            fps: 0,
+            frameCount: 0,
+            lastFpsUpdate: Date.now()
+        };
+        
+        // === ЭЛЕМЕНТЫ DOM ===
+        const radar = document.getElementById('radar');
+        const status = document.getElementById('status');
+        const colorPicker = document.getElementById('colorPicker');
+        const sensitivity = document.getElementById('sensitivity');
+        const threshold = document.getElementById('threshold');
+        const colorValue = document.getElementById('colorValue');
+        const sensValue = document.getElementById('sensValue');
+        const threshValue = document.getElementById('threshValue');
+        
+        // === НАСТРОЙКА КОНФИГУРАЦИИ ===
+        colorPicker.addEventListener('input', (e) => {
+            const hex = e.target.value;
+            const r = parseInt(hex.substr(1,2), 16);
+            const g = parseInt(hex.substr(3,2), 16);
+            const b = parseInt(hex.substr(5,2), 16);
+            
+            CONFIG.enemyColor = { r, g, b };
+            colorValue.textContent = hex;
+            colorValue.style.color = hex;
+        });
+        
+        sensitivity.addEventListener('input', (e) => {
+            CONFIG.sensitivity = parseInt(e.target.value);
+            sensValue.textContent = CONFIG.sensitivity;
+        });
+        
+        threshold.addEventListener('input', (e) => {
+            CONFIG.threshold = parseInt(e.target.value);
+            threshValue.textContent = CONFIG.threshold;
+        });
+        
+        // === ОСНОВНЫЕ ФУНКЦИИ ===
+        
+        async function startCapture() {
+            if (state.isCapturing) {
+                stopCapture();
+                return;
             }
             
-            init() {
-                // Шаг 1: Проверяем доступные API
-                this.checkAvailableAPIs();
-                
-                // Шаг 2: Определяем игру
-                this.detectGame();
-                
-                // Шаг 3: Выбираем метод анализа
-                this.selectAnalysisMethod();
-                
-                // Шаг 4: Запускаем системы
-                this.startSystems();
-                
-                // Шаг 5: Маскировка
-                this.setupStealth();
-                
-                console.log('[GameOverlay] Ready. Method:', this.analysisMethod);
-            }
+            status.textContent = '⏳ Requesting screen access...';
             
-            checkAvailableAPIs() {
-                // Проверяем какие API доступны
-                this.availableAPIs = {
-                    screenCapture: 'getDisplayMedia' in navigator.mediaDevices,
-                    gamepad: 'getGamepads' in navigator,
-                    audio: 'AudioContext' in window || 'webkitAudioContext' in window,
-                    usb: 'usb' in navigator,
-                    hid: 'hid' in navigator,
-                    clipboard: 'clipboard' in navigator,
-                    storage: 'localStorage' in window
-                };
-                
-                console.log('[GameOverlay] Available APIs:', this.availableAPIs);
-            }
-            
-            detectGame() {
-                // Автоматическое определение запущенной игры
-                // По умолчанию для Valorant
-                
-                this.detectedGame = {
-                    name: 'VALORANT',
-                    enemyColor: { r: 200, g: 50, b: 50 }, // Красный
-                    teamColor: { r: 50, g: 100, b: 200 }, // Синий
-                    radarRange: 100,
-                    soundProfile: 'fps'
-                };
-            }
-            
-            selectAnalysisMethod() {
-                // Выбор метода анализа на основе доступных API
-                
-                if (this.availableAPIs.screenCapture) {
-                    this.analysisMethod = 'screen';
-                    console.log('[GameOverlay] Using screen capture method');
-                } else if (this.availableAPIs.audio) {
-                    this.analysisMethod = 'audio';
-                    console.log('[GameOverlay] Using audio analysis method');
-                } else if (this.availableAPIs.gamepad) {
-                    this.analysisMethod = 'input';
-                    console.log('[GameOverlay] Using input analysis method');
-                } else {
-                    this.analysisMethod = 'simulation';
-                    console.log('[GameOverlay] Using simulation mode');
-                }
-            }
-            
-            startSystems() {
-                // Запуск всех систем
-                
-                // 1. Система обновления метрик (для маскировки)
-                this.startMetricsUpdate();
-                
-                // 2. Система анализа (в зависимости от метода)
-                this.startAnalysis();
-                
-                // 3. Система вывода информации
-                this.startOutput();
-                
-                // 4. Система маскировки
-                this.startStealthSystem();
-            }
-            
-            startMetricsUpdate() {
-                // Обновление показателей производительности
-                setInterval(() => {
-                    this.updatePerformanceMetrics();
-                }, 1000);
-            }
-            
-            updatePerformanceMetrics() {
-                // Случайные, но реалистичные метрики
-                const metrics = {
-                    fps: 120 + Math.floor(Math.random() * 60),
-                    gpu: 65 + Math.floor(Math.random() * 30),
-                    temp: 55 + Math.floor(Math.random() * 15),
-                    vram: (4.5 + Math.random() * 1.5).toFixed(1)
-                };
-                
-                // Обновляем отображение
-                document.getElementById('fps').textContent = metrics.fps;
-                document.getElementById('gpu').textContent = metrics.gpu + '%';
-                document.getElementById('temp').textContent = metrics.temp + '°C';
-                document.getElementById('vram').textContent = metrics.vram + 'GB';
-            }
-            
-            startAnalysis() {
-                // Запуск анализа в зависимости от выбранного метода
-                
-                switch(this.analysisMethod) {
-                    case 'screen':
-                        this.startScreenAnalysis();
-                        break;
-                    case 'audio':
-                        this.startAudioAnalysis();
-                        break;
-                    case 'input':
-                        this.startInputAnalysis();
-                        break;
-                    case 'simulation':
-                        this.startSimulation();
-                        break;
-                }
-            }
-            
-            startScreenAnalysis() {
-                // Анализ через Screen Capture API
-                console.log('[GameOverlay] Starting screen analysis...');
-                
-                // Пытаемся получить доступ к экрану
-                this.requestScreenAccess().then(hasAccess => {
-                    if (hasAccess) {
-                        console.log('[GameOverlay] Screen access granted');
-                        this.analyzeScreen();
-                    } else {
-                        console.log('[GameOverlay] Screen access denied, falling back');
-                        this.analysisMethod = 'audio';
-                        this.startAudioAnalysis();
-                    }
+            try {
+                // 1. ЗАПРАШИВАЕМ ДОСТУП К ЭКРАНУ
+                state.stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: {
+                        displaySurface: 'window', // 'monitor' для всего экрана
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
+                    audio: false
                 });
-            }
-            
-            async requestScreenAccess() {
-                try {
-                    // Пробуем получить доступ к экрану
-                    const stream = await navigator.mediaDevices.getDisplayMedia({
-                        video: true,
-                        audio: false
+                
+                // 2. СОЗДАЕМ ВИДЕО ЭЛЕМЕНТ
+                state.video = document.createElement('video');
+                state.video.srcObject = state.stream;
+                state.video.autoplay = true;
+                state.video.playsInline = true;
+                
+                // 3. СОЗДАЕМ CANVAS ДЛЯ АНАЛИЗА
+                state.canvas = document.createElement('canvas');
+                state.ctx = state.canvas.getContext('2d', { willReadFrequently: true });
+                
+                // 4. ЖДЕМ ЗАГРУЗКИ ВИДЕО
+                state.video.onloadedmetadata = () => {
+                    state.canvas.width = state.video.videoWidth;
+                    state.canvas.height = state.video.videoHeight;
+                    
+                    status.textContent = '✅ Capturing: ' + 
+                        state.canvas.width + 'x' + state.canvas.height;
+                    
+                    state.isCapturing = true;
+                    
+                    // 5. ЗАПУСКАЕМ АНАЛИЗ
+                    startAnalysis();
+                    
+                    // 6. ОБРАБОТКА ОСТАНОВКИ ЗАХВАТА
+                    state.stream.getVideoTracks()[0].addEventListener('ended', () => {
+                        stopCapture();
+                        status.textContent = '❌ Screen capture stopped';
                     });
-                    
-                    this.screenStream = stream;
-                    
-                    // Обработка отключения
-                    stream.getVideoTracks()[0].onended = () => {
-                        console.log('[GameOverlay] Screen sharing stopped');
-                        this.analysisMethod = 'simulation';
-                    };
-                    
-                    return true;
-                } catch (error) {
-                    console.warn('[GameOverlay] Screen access error:', error.message);
-                    return false;
-                }
-            }
-            
-            analyzeScreen() {
-                // Анализ видеопотока
-                if (!this.screenStream) return;
-                
-                const video = document.createElement('video');
-                video.srcObject = this.screenStream;
-                video.play();
-                
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    
-                    const analyzeFrame = () => {
-                        if (!this.isActive) return;
-                        
-                        // Рисуем кадр
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        
-                        // Получаем данные изображения
-                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        const data = imageData.data;
-                        
-                        // Ищем врагов по цвету
-                        this.findEnemiesByColor(data, canvas.width, canvas.height);
-                        
-                        // Следующий кадр
-                        requestAnimationFrame(analyzeFrame);
-                    };
-                    
-                    video.onplay = () => {
-                        analyzeFrame();
-                    };
-                };
-            }
-            
-            findEnemiesByColor(imageData, width, height) {
-                // Поиск врагов по цвету (красные в Valorant)
-                const enemyColor = this.detectedGame.enemyColor;
-                const threshold = 50;
-                
-                const enemies = [];
-                
-                // Быстрая проверка каждого 10-го пикселя
-                for (let y = 0; y < height; y += 10) {
-                    for (let x = 0; x < width; x += 10) {
-                        const index = (y * width + x) * 4;
-                        const r = imageData[index];
-                        const g = imageData[index + 1];
-                        const b = imageData[index + 2];
-                        
-                        // Проверка на красный цвет врага
-                        if (Math.abs(r - enemyColor.r) < threshold &&
-                            Math.abs(g - enemyColor.g) < threshold &&
-                            Math.abs(b - enemyColor.b) < threshold) {
-                            enemies.push({ x, y });
-                        }
-                    }
-                }
-                
-                // Обновляем позиции врагов
-                if (enemies.length > 0) {
-                    this.processEnemyPositions(enemies);
-                }
-            }
-            
-            startAudioAnalysis() {
-                // Анализ через звук
-                console.log('[GameOverlay] Starting audio analysis...');
-                
-                if (!this.availableAPIs.audio) {
-                    console.warn('[GameOverlay] Audio API not available');
-                    this.analysisMethod = 'simulation';
-                    this.startSimulation();
-                    return;
-                }
-                
-                try {
-                    // Создаем аудиоконтекст
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    this.audioContext = new AudioContext();
-                    
-                    // Пытаемся получить доступ к микрофону
-                    navigator.mediaDevices.getUserMedia({ audio: true })
-                        .then(stream => {
-                            this.audioStream = stream;
-                            this.setupAudioProcessing();
-                        })
-                        .catch(error => {
-                            console.warn('[GameOverlay] Audio access error:', error.message);
-                            this.analysisMethod = 'simulation';
-                            this.startSimulation();
-                        });
-                        
-                } catch (error) {
-                    console.warn('[GameOverlay] Audio setup error:', error);
-                    this.analysisMethod = 'simulation';
-                    this.startSimulation();
-                }
-            }
-            
-            setupAudioProcessing() {
-                if (!this.audioStream || !this.audioContext) return;
-                
-                // Создаем источник из микрофона
-                const source = this.audioContext.createMediaStreamSource(this.audioStream);
-                
-                // Анализатор для обработки звука
-                const analyser = this.audioContext.createAnalyser();
-                analyser.fftSize = 2048;
-                source.connect(analyser);
-                
-                // Буфер для данных
-                const bufferLength = analyser.frequencyBinCount;
-                const dataArray = new Uint8Array(bufferLength);
-                
-                // Функция анализа
-                const analyzeAudio = () => {
-                    if (!this.isActive) return;
-                    
-                    analyser.getByteFrequencyData(dataArray);
-                    
-                    // Анализируем частоты для определения направления
-                    this.analyzeAudioFrequencies(dataArray);
-                    
-                    requestAnimationFrame(analyzeAudio);
                 };
                 
-                analyzeAudio();
-            }
-            
-            analyzeAudioFrequencies(frequencies) {
-                // Простой анализ стерео звука для определения направления
-                // В реальности была бы сложная обработка
-    
-                // Симулируем обнаружение врагов по звуку
-                if (Math.random() > 0.7) {
-                    const enemyCount = Math.floor(Math.random() * 3) + 1;
-                    const simulatedEnemies = [];
-                    
-                    for (let i = 0; i < enemyCount; i++) {
-                        simulatedEnemies.push({
-                            x: Math.random() * 100,
-                            y: Math.random() * 100,
-                            distance: Math.random() * 100
-                        });
-                    }
-                    
-                    this.processEnemyPositions(simulatedEnemies);
+            } catch (error) {
+                status.textContent = '❌ Error: ' + error.message;
+                console.error('Capture error:', error);
+                
+                // ПРЕДЛАГАЕМ АЛЬТЕРНАТИВУ
+                if (error.name === 'NotAllowedError') {
+                    status.innerHTML = '❌ Permission denied<br>' +
+                        '1. Refresh page<br>' +
+                        '2. Click "Start Capture"<br>' +
+                        '3. Select game window<br>' +
+                        '4. Click "Share"';
                 }
-            }
-            
-            startSimulation() {
-                // Режим симуляции (когда нет доступа к API)
-                console.log('[GameOverlay] Starting simulation mode');
-                
-                setInterval(() => {
-                    // Случайные позиции врагов для демонстрации
-                    if (Math.random() > 0.5) {
-                        const enemyCount = Math.floor(Math.random() * 4) + 1;
-                        const simulatedEnemies = [];
-                        
-                        for (let i = 0; i < enemyCount; i++) {
-                            simulatedEnemies.push({
-                                x: 30 + Math.random() * 40,
-                                y: 30 + Math.random() * 40,
-                                distance: 20 + Math.random() * 80
-                            });
-                        }
-                        
-                        this.processEnemyPositions(simulatedEnemies);
-                    }
-                }, 2000);
-            }
-            
-            processEnemyPositions(enemies) {
-                // Обработка позиций врагов
-                this.enemyPositions = enemies.slice(0, 5); // Максимум 5 врагов
-                this.updateRadar();
-                this.updateCrosshair();
-            }
-            
-            updateRadar() {
-                // Обновление радара
-                const radar = document.getElementById('radar');
-                
-                // Очищаем старых врагов
-                const oldEnemies = radar.querySelectorAll('.enemy');
-                oldEnemies.forEach(e => e.remove());
-                
-                // Добавляем новых врагов
-                this.enemyPositions.forEach((enemy, index) => {
-                    const enemyEl = document.createElement('div');
-                    enemyEl.className = 'enemy';
-                    enemyEl.style.left = enemy.x + '%';
-                    enemyEl.style.top = enemy.y + '%';
-                    enemyEl.style.animationDelay = (index * 0.3) + 's';
-                    
-                    radar.appendChild(enemyEl);
-                });
-            }
-            
-            updateCrosshair() {
-                // Обновление прицела на основе ближайшего врага
-                if (this.enemyPositions.length === 0) return;
-                
-                // Находим ближайшего врага
-                const closest = this.enemyPositions.reduce((prev, curr) => 
-                    curr.distance < prev.distance ? curr : prev
-                );
-                
-                // В реальности здесь была бы коррекция прицела
-                // Для демонстрации просто меняем цвет
-                const crosshair = document.getElementById('crosshair');
-                if (closest.distance < 30) {
-                    crosshair.style.filter = 'drop-shadow(0 0 5px #ff3333)';
-                } else {
-                    crosshair.style.filter = 'drop-shadow(0 0 5px #00ff9d)';
-                }
-            }
-            
-            startOutput() {
-                // Система вывода информации
-                console.log('[GameOverlay] Output system ready');
-                
-                // Можно добавить:
-                // - Управление RGB через WebHID
-                // - Звуковые оповещения
-                // - Виброотдачу
-            }
-            
-            setupStealth() {
-                // Настройка маскировки
-                console.log('[GameOverlay] Stealth system activated');
-                
-                // Маскируемся под легитимные запросы
-                this.setupFakeRequests();
-                
-                // Скрываем консольные логи в продакшене
-                if (window.location.protocol !== 'file:') {
-                    this.hideConsoleLogs();
-                }
-                
-                // Система самоочистки
-                this.setupSelfCleanup();
-            }
-            
-            setupFakeRequests() {
-                // Фейковые запросы для маскировки
-                setInterval(() => {
-                    // К популярным аналитическим сервисам
-                    const endpoints = [
-                        'https://www.google-analytics.com/g/collect',
-                        'https://stats.g.doubleclick.net/j/collect',
-                        'https://telemetry.mozilla.org/v1/data'
-                    ];
-                    
-                    endpoints.forEach(endpoint => {
-                        fetch(endpoint, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            body: new URLSearchParams({
-                                v: '1',
-                                tid: 'UA-XXXXX-Y',
-                                cid: Math.random().toString(36).substring(2),
-                                t: 'pageview',
-                                dl: window.location.href
-                            })
-                        }).catch(() => {});
-                    });
-                }, 30000);
-            }
-            
-            hideConsoleLogs() {
-                // Скрываем логи в продакшене
-                const originalLog = console.log;
-                const originalWarn = console.warn;
-                const originalError = console.error;
-                
-                console.log = function() {};
-                console.warn = function() {};
-                console.error = function() {};
-                
-                // Восстанавливаем при разработке
-                if (window.location.hostname === 'localhost' || 
-                    window.location.hostname === '127.0.0.1') {
-                    console.log = originalLog;
-                    console.warn = originalWarn;
-                    console.error = originalError;
-                }
-            }
-            
-            setupSelfCleanup() {
-                // Очистка при закрытии
-                window.addEventListener('beforeunload', () => {
-                    this.cleanup();
-                });
-            }
-            
-            cleanup() {
-                // Очистка всех следов
-                console.log('[GameOverlay] Cleaning up...');
-                
-                // Останавливаем все потоки
-                this.isActive = false;
-                
-                // Закрываем медиапотоки
-                if (this.screenStream) {
-                    this.screenStream.getTracks().forEach(track => track.stop());
-                }
-                
-                if (this.audioStream) {
-                    this.audioStream.getTracks().forEach(track => track.stop());
-                }
-                
-                // Закрываем аудиоконтекст
-                if (this.audioContext && this.audioContext.state !== 'closed') {
-                    this.audioContext.close();
-                }
-                
-                // Очищаем localStorage
-                localStorage.clear();
-                sessionStorage.clear();
-                
-                console.log('[GameOverlay] Cleanup complete');
-            }
-            
-            startStealthSystem() {
-                // Система активной маскировки
-                setInterval(() => {
-                    // Случайно меняем поведение
-                    if (Math.random() > 0.8) {
-                        this.randomizeMetrics();
-                    }
-                }, 10000);
-            }
-            
-            randomizeMetrics() {
-                // Случайное изменение метрик для реалистичности
-                console.log('[GameOverlay] Randomizing metrics...');
             }
         }
         
-        // === ГЛОБАЛЬНЫЕ ФУНКЦИИ ===
+        function stopCapture() {
+            state.isCapturing = false;
+            
+            if (state.stream) {
+                state.stream.getTracks().forEach(track => track.stop());
+                state.stream = null;
+            }
+            
+            if (state.video) {
+                state.video.srcObject = null;
+                state.video = null;
+            }
+            
+            state.enemies = [];
+            updateRadar();
+            status.textContent = '⏸️ Capture stopped';
+        }
         
-        let esp = null;
+        function startAnalysis() {
+            function analyzeFrame() {
+                if (!state.isCapturing || !state.video) return;
+                
+                // 1. СЧИТАЕМ FPS
+                state.frameCount++;
+                const now = Date.now();
+                if (now - state.lastFpsUpdate >= 1000) {
+                    state.fps = state.frameCount;
+                    state.frameCount = 0;
+                    state.lastFpsUpdate = now;
+                }
+                
+                // 2. РИСУЕМ КАДР НА CANVAS
+                state.ctx.drawImage(state.video, 0, 0, 
+                    state.canvas.width, state.canvas.height);
+                
+                // 3. АНАЛИЗИРУЕМ ИЗОБРАЖЕНИЕ
+                const imageData = state.ctx.getImageData(
+                    0, 0, state.canvas.width, state.canvas.height
+                );
+                
+                // 4. ИЩЕМ ВРАГОВ ПО ЦВЕТУ
+                findEnemies(imageData);
+                
+                // 5. ОБНОВЛЯЕМ РАДАР
+                updateRadar();
+                
+                // 6. СЛЕДУЮЩИЙ КАДР
+                requestAnimationFrame(analyzeFrame);
+            }
+            
+            analyzeFrame();
+        }
         
-        function initESP() {
-            if (!esp) {
-                try {
-                    esp = new SimpleBrowserESP();
-                    showStatus('System ready', 'success');
-                } catch (error) {
-                    showStatus('Initialization failed: ' + error.message, 'error');
-                    console.error('ESP init error:', error);
+        function findEnemies(imageData) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            
+            const enemyColor = CONFIG.enemyColor;
+            const threshold = CONFIG.threshold;
+            
+            const enemyPixels = [];
+            
+            // ОПТИМИЗИРОВАННЫЙ ПОИСК (каждый N-й пиксель)
+            const step = Math.max(1, Math.floor(20 - CONFIG.sensitivity / 5));
+            
+            for (let y = 0; y < height; y += step) {
+                for (let x = 0; x < width; x += step) {
+                    const index = (y * width + x) * 4;
+                    
+                    const r = data[index];
+                    const g = data[index + 1];
+                    const b = data[index + 2];
+                    
+                    // ПРОВЕРКА ЦВЕТА С ПОРОГОМ
+                    const colorDiff = Math.abs(r - enemyColor.r) + 
+                                     Math.abs(g - enemyColor.g) + 
+                                     Math.abs(b - enemyColor.b);
+                    
+                    if (colorDiff < threshold) {
+                        enemyPixels.push({ x, y });
+                    }
                 }
             }
-            return esp;
+            
+            // КЛАСТЕРИЗАЦИЯ ПИКСЕЛЕЙ ВО ВРАГОВ
+            state.enemies = clusterPixels(enemyPixels);
+        }
+        
+        function clusterPixels(pixels) {
+            if (pixels.length === 0) return [];
+            
+            const clusters = [];
+            const clusterDistance = 50; // Макс расстояние между пикселями в кластере
+            
+            for (const pixel of pixels) {
+                let added = false;
+                
+                for (const cluster of clusters) {
+                    const center = cluster.center;
+                    const dist = Math.sqrt(
+                        Math.pow(pixel.x - center.x, 2) + 
+                        Math.pow(pixel.y - center.y, 2)
+                    );
+                    
+                    if (dist < clusterDistance) {
+                        cluster.pixels.push(pixel);
+                        // Пересчитываем центр
+                        cluster.center.x = cluster.pixels.reduce((sum, p) => sum + p.x, 0) / cluster.pixels.length;
+                        cluster.center.y = cluster.pixels.reduce((sum, p) => sum + p.y, 0) / cluster.pixels.length;
+                        added = true;
+                        break;
+                    }
+                }
+                
+                if (!added) {
+                    clusters.push({
+                        pixels: [pixel],
+                        center: { x: pixel.x, y: pixel.y }
+                    });
+                }
+            }
+            
+            // ФИЛЬТРУЕМ МАЛЕНЬКИЕ КЛАСТЕРЫ (ШУМ)
+            return clusters.filter(c => 
+                c.pixels.length >= CONFIG.minEnemySize
+            ).map(c => c.center);
+        }
+        
+        function updateRadar() {
+            // ОЧИЩАЕМ СТАРЫХ ВРАГОВ
+            const oldEnemies = radar.querySelectorAll('.enemy');
+            oldEnemies.forEach(e => e.remove());
+            
+            // ДОБАВЛЯЕМ НОВЫХ ВРАГОВ
+            state.enemies.forEach(enemy => {
+                // КОНВЕРТИРУЕМ ЭКРАННЫЕ КООРДИНАТЫ В КООРДИНАТЫ РАДАРА
+                const radarX = (enemy.x / state.canvas.width) * 100;
+                const radarY = (enemy.y / state.canvas.height) * 100;
+                
+                // ОГРАНИЧИВАЕМ В ПРЕДЕЛАХ РАДАРА
+                const boundedX = Math.max(5, Math.min(95, radarX));
+                const boundedY = Math.max(5, Math.min(95, radarY));
+                
+                // СОЗДАЕМ ЭЛЕМЕНТ ВРАГА
+                const enemyEl = document.createElement('div');
+                enemyEl.className = 'enemy';
+                enemyEl.style.left = boundedX + '%';
+                enemyEl.style.top = boundedY + '%';
+                enemyEl.title = `X: ${Math.round(enemy.x)}, Y: ${Math.round(enemy.y)}`;
+                
+                // РАЗМЕР В ЗАВИСИМОСТИ ОТ БЛИЗОСТИ К ЦЕНТРУ
+                const centerDist = Math.sqrt(
+                    Math.pow(boundedX - 50, 2) + 
+                    Math.pow(boundedY - 50, 2)
+                );
+                const size = Math.max(5, 15 - centerDist / 10);
+                enemyEl.style.width = size + 'px';
+                enemyEl.style.height = size + 'px';
+                
+                radar.appendChild(enemyEl);
+            });
+            
+            // ОБНОВЛЯЕМ СТАТУС
+            status.innerHTML = `✅ ${state.enemies.length} enemies detected | FPS: ${state.fps}`;
         }
         
         function toggleOverlay() {
             const overlay = document.getElementById('overlay');
-            overlay.classList.toggle('hidden');
+            overlay.style.display = overlay.style.display === 'none' ? 'block' : 'none';
         }
         
         function calibrate() {
-            showStatus('Calibration complete. Overlay optimized.', 'success');
-        }
-        
-        function showStatus(message, type) {
-            // Показываем статусное сообщение
-            const status = document.createElement('div');
-            status.style.cssText = `
+            status.textContent = '🎯 Calibration mode - Click on enemy color';
+            
+            if (!state.isCapturing) {
+                status.textContent = '❌ Start capture first';
+                return;
+            }
+            
+            // СОЗДАЕМ КАЛИБРОВОЧНОЕ ОКНО
+            const calibrator = document.createElement('div');
+            calibrator.style.cssText = `
                 position: fixed;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                background: ${type === 'error' ? '#ff3333' : '#00a8ff'};
-                color: white;
-                padding: 15px 25px;
-                border-radius: 8px;
+                width: 400px;
+                height: 300px;
+                background: rgba(0,0,0,0.9);
+                border: 3px solid #0af;
                 z-index: 1000000;
-                font-family: Arial;
-                text-align: center;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                cursor: crosshair;
             `;
-            status.textContent = message;
             
-            document.body.appendChild(status);
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 300;
+            calibrator.appendChild(canvas);
             
-            setTimeout(() => {
-                status.remove();
-            }, 3000);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(state.video, 0, 0, 400, 300);
+            
+            // ОБРАБОТКА КЛИКА ДЛЯ ВЫБОРА ЦВЕТА
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const pixel = ctx.getImageData(x, y, 1, 1).data;
+                const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+                
+                // ОБНОВЛЯЕМ ЦВЕТ
+                CONFIG.enemyColor = { r: pixel[0], g: pixel[1], b: pixel[2] };
+                colorPicker.value = hex;
+                colorValue.textContent = hex;
+                colorValue.style.color = hex;
+                
+                // ПОКАЗЫВАЕМ ВЫБРАННЫЙ ЦВЕТ
+                ctx.strokeStyle = '#0f0';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x - 5, y - 5, 10, 10);
+                
+                status.textContent = `✅ Color set to RGB(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
+                
+                setTimeout(() => {
+                    calibrator.remove();
+                    status.textContent = '✅ Calibration complete';
+                }, 2000);
+            });
+            
+            // КНОПКА ОТМЕНЫ
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.style.cssText = `
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                padding: 5px 10px;
+            `;
+            cancelBtn.onclick = () => {
+                calibrator.remove();
+                status.textContent = 'Calibration cancelled';
+            };
+            calibrator.appendChild(cancelBtn);
+            
+            document.body.appendChild(calibrator);
         }
         
-        // === ЗАПУСК СИСТЕМЫ ===
+        // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
         
-        // Ждем загрузки страницы
+        // === ИНСТРУКЦИЯ ПРИ ЗАГРУЗКЕ ===
         window.addEventListener('load', () => {
-            // Небольшая задержка для имитации загрузки
             setTimeout(() => {
-                initESP();
+                status.innerHTML = `
+                    <div style="text-align: left; font-size: 11px;">
+                        <strong>INSTRUCTIONS:</strong><br>
+                        1. Set Valorant to <strong>Windowed/Borderless</strong><br>
+                        2. Click <strong>Start Capture</strong><br>
+                        3. Select <strong>Valorant window</strong><br>
+                        4. Adjust color if needed<br>
+                        5. Use <strong>Calibrate</strong> for best results
+                    </div>
+                `;
             }, 1000);
         });
         
-        // Обработка ошибок
-        window.addEventListener('error', (event) => {
-            console.error('Global error:', event.error);
+        // === ГОРЯЧИЕ КЛАВИШИ ===
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'q') {
+                toggleOverlay();
+            }
+            if (e.ctrlKey && e.key === 's') {
+                if (state.isCapturing) stopCapture();
+                else startCapture();
+            }
         });
         
-        // === ИНСТРУКЦИЯ ДЛЯ ПОЛЬЗОВАТЕЛЯ ===
-        
-        // Показываем инструкцию при первом запуске
-        if (!localStorage.getItem('esp_instructions_shown')) {
-            setTimeout(() => {
-                const instructions = `
-                    <div style="
-                        position: fixed;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        background: rgba(10, 15, 25, 0.95);
-                        color: #00ff9d;
-                        padding: 20px;
-                        border-radius: 10px;
-                        border: 2px solid #00a8ff;
-                        z-index: 1000000;
-                        max-width: 400px;
-                        font-family: Arial;
-                    ">
-                        <h3>AMD Performance Overlay</h3>
-                        <p>1. Запустите игру в оконном режиме</p>
-                        <p>2. Разрешите доступ к экрану при запросе</p>
-                        <p>3. Overlay покажет радар с врагами</p>
-                        <p>4. Используйте кнопки для управления</p>
-                        <button onclick="this.parentElement.remove(); localStorage.setItem('esp_instructions_shown', 'true')" 
-                                style="margin-top: 10px; padding: 8px 16px; background: #00a8ff; border: none; color: white; border-radius: 4px; cursor: pointer;">
-                            Понятно
-                        </button>
-                    </div>
-                `;
-                
-                document.body.insertAdjacentHTML('beforeend', instructions);
-            }, 2000);
-        }
+        console.log('Game Radar Pro loaded');
+        console.log('Controls:');
+        console.log('- Ctrl+Q: Toggle overlay');
+        console.log('- Ctrl+S: Start/Stop capture');
     </script>
 </body>
 </html>
