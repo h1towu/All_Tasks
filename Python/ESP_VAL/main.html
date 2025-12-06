@@ -3,37 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Assistant Pro</title>
+    <title>System Monitor</title>
     <style>
-        /* СБРОС И БАЗОВЫЕ СТИЛИ */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background: transparent !important;
+        /* СБРОС И ОСНОВНЫЕ СТИЛИ */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        /* БЕЛЫЙ ЭКРАН В БРАУЗЕРЕ */
+        body {
+            background: white !important;
             margin: 0;
             padding: 0;
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
             font-family: 'Segoe UI', sans-serif;
         }
         
-        /* ОСНОВНОЙ OVERLAY КОНТЕЙНЕР */
-        #gameOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none; /* Пропускаем клики сквозь overlay */
-            z-index: 2147483647; /* Максимальный z-index */
+        /* КОНТЕЙНЕР ДЛЯ ОСНОВНОГО КОНТЕНТА (БЕЛЫЙ ЭКРАН) */
+        #browserContent {
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
         }
         
-        /* РАДАР В УГЛУ */
+        /* ОТДЕЛЬНЫЙ OVERLAY ДЛЯ ESP (ПОВЕРХ ИГРЫ) */
+        #gameOverlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            pointer-events: none !important;
+            z-index: 2147483647 !important; /* Максимальный z-index */
+            display: none; /* Скрыт по умолчанию */
+        }
+        
+        /* ОТОБРАЖАЕМ OVERLAY ТОЛЬКО КОГДА ЗАХВАЧЕН ЭКРАН */
+        .overlay-visible #gameOverlay {
+            display: block !important;
+        }
+        
+        /* СКРЫВАЕМ БРАУЗЕРНЫЙ КОНТЕНТ ПРИ ЗАХВАТЕ */
+        .overlay-visible #browserContent {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* СТИЛИ ESP КОМПОНЕНТОВ (ТОЛЬКО В OVERLAY) */
         #radarContainer {
             position: absolute;
             top: 20px;
             right: 20px;
             width: 200px;
             height: 200px;
-            pointer-events: auto; /* Разрешаем взаимодействие с радаром */
+            pointer-events: auto;
+            z-index: 2147483647;
         }
         
         #radar {
@@ -53,7 +90,6 @@
             backdrop-filter: blur(5px);
         }
         
-        /* СКАНИРУЮЩАЯ ЛИНИЯ */
         .sweepLine {
             position: absolute;
             width: 100%;
@@ -74,21 +110,6 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* СЕТКА РАДАРА */
-        .radarGrid {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(circle at center, transparent 65%, rgba(0, 175, 255, 0.1) 65%, rgba(0, 175, 255, 0.1) 70%, transparent 70%),
-                radial-gradient(circle at center, transparent 80%, rgba(0, 175, 255, 0.1) 80%, rgba(0, 175, 255, 0.1) 85%, transparent 85%),
-                linear-gradient(0deg, transparent 49.5%, rgba(0, 175, 255, 0.2) 50%, transparent 50.5%),
-                linear-gradient(90deg, transparent 49.5%, rgba(0, 175, 255, 0.2) 50%, transparent 50.5%),
-                linear-gradient(45deg, transparent 49.5%, rgba(0, 175, 255, 0.1) 50%, transparent 50.5%),
-                linear-gradient(135deg, transparent 49.5%, rgba(0, 175, 255, 0.1) 50%, transparent 50.5%);
-        }
-        
-        /* ТОЧКИ ВРАГОВ НА РАДАРЕ */
         .radarEnemy {
             position: absolute;
             width: 10px;
@@ -110,30 +131,7 @@
             50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
         }
         
-        /* ЛИНИИ К ВРАГАМ НА РАДАРЕ */
-        .radarLine {
-            position: absolute;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(255, 50, 50, 0.7));
-            transform-origin: 0 0;
-            z-index: 5;
-        }
-        
-        /* ИНФО О ВРАГЕ НА РАДАРЕ */
-        .enemyInfo {
-            position: absolute;
-            color: white;
-            font-size: 10px;
-            background: rgba(255, 50, 50, 0.7);
-            padding: 2px 6px;
-            border-radius: 3px;
-            white-space: nowrap;
-            transform: translateX(-50%);
-            z-index: 15;
-            pointer-events: auto;
-        }
-        
-        /* ОБВОДКА ВРАГОВ НА ЭКРАНЕ */
+        /* ОБВОДКА ВРАГОВ */
         .enemyOutline {
             position: absolute;
             pointer-events: none;
@@ -141,220 +139,28 @@
             box-sizing: border-box;
         }
         
-        /* СТИЛИ ОБВОДКИ */
         .outline-box {
             position: absolute;
-            border: 3px solid;
+            border: 3px solid #ff3333;
             border-radius: 4px;
             animation: outlinePulse 2s infinite;
             box-shadow: 
-                0 0 15px currentColor,
+                0 0 15px #ff3333,
                 inset 0 0 15px rgba(255, 255, 255, 0.2);
             background: transparent;
-        }
-        
-        .outline-red {
-            border-color: #ff3333;
-            color: #ff3333;
-        }
-        
-        .outline-orange {
-            border-color: #ff9900;
-            color: #ff9900;
-        }
-        
-        .outline-yellow {
-            border-color: #ffff00;
-            color: #ffff00;
         }
         
         @keyframes outlinePulse {
             0%, 100% { 
                 box-shadow: 
-                    0 0 15px currentColor,
+                    0 0 15px #ff3333,
                     inset 0 0 15px rgba(255, 255, 255, 0.2);
             }
             50% { 
                 box-shadow: 
-                    0 0 25px currentColor,
+                    0 0 25px #ff3333,
                     inset 0 0 25px rgba(255, 255, 255, 0.3);
             }
-        }
-        
-        /* ИНФО НАД ВРАГОМ */
-        .enemyLabel {
-            position: absolute;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-            text-shadow: 
-                0 0 5px #000,
-                0 0 10px #000;
-            padding: 2px 8px;
-            border-radius: 3px;
-            transform: translateX(-50%);
-            white-space: nowrap;
-            z-index: 2147483647;
-            pointer-events: none;
-        }
-        
-        .label-red {
-            background: linear-gradient(135deg, rgba(255, 50, 50, 0.9), rgba(200, 0, 0, 0.9));
-            border: 1px solid #ff3333;
-        }
-        
-        .label-distance {
-            position: absolute;
-            font-size: 10px;
-            color: #66ff66;
-            text-shadow: 0 0 5px #000;
-            transform: translateX(-50%);
-            z-index: 2147483647;
-        }
-        
-        /* ПАНЕЛЬ УПРАВЛЕНИЯ */
-        #controlPanel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(10, 15, 30, 0.85);
-            border: 2px solid rgba(0, 175, 255, 0.7);
-            border-radius: 10px;
-            padding: 15px;
-            width: 280px;
-            pointer-events: auto;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
-            z-index: 2147483647;
-        }
-        
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(0, 175, 255, 0.3);
-        }
-        
-        .panel-title {
-            color: #00ff9d;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        
-        .close-btn {
-            background: #ff3333;
-            color: white;
-            border: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 14px;
-            line-height: 1;
-        }
-        
-        .config-group {
-            margin-bottom: 15px;
-        }
-        
-        .config-label {
-            display: block;
-            color: #66ccff;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-        
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        input[type="range"] {
-            flex: 1;
-            height: 6px;
-            -webkit-appearance: none;
-            background: rgba(0, 100, 200, 0.5);
-            border-radius: 3px;
-            outline: none;
-        }
-        
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #00a8ff;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 10px #00a8ff;
-        }
-        
-        .value-display {
-            color: #00ff9d;
-            font-size: 12px;
-            min-width: 30px;
-            text-align: right;
-            font-family: 'Consolas', monospace;
-        }
-        
-        .color-preview {
-            width: 30px;
-            height: 30px;
-            border-radius: 5px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            cursor: pointer;
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #00a8ff, #0097e6);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            margin: 2px;
-            transition: all 0.3s;
-        }
-        
-        .btn:hover {
-            background: linear-gradient(135deg, #0097e6, #0088cc);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 168, 255, 0.4);
-        }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, #ff3838, #e84118);
-        }
-        
-        .btn-success {
-            background: linear-gradient(135deg, #00b894, #00a085);
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-        
-        /* СТАТУС БАР */
-        #statusBar {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: #00ff9d;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 12px;
-            pointer-events: auto;
-            z-index: 2147483647;
-            border: 1px solid #00a8ff;
-            backdrop-filter: blur(5px);
         }
         
         /* КРЕСТИК ПРИЦЕЛА */
@@ -381,227 +187,266 @@
             box-shadow: 0 0 10px #00ff9d;
         }
         
-        .crosshair-line {
-            position: absolute;
-            background: #00ff9d;
-            box-shadow: 0 0 5px #00ff9d;
-        }
-        
-        .crosshair-h {
-            width: 16px;
-            height: 2px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        .crosshair-v {
-            width: 2px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        /* АНИМАЦИЯ ОБНАРУЖЕНИЯ */
-        .detection-flash {
+        /* ПАНЕЛЬ УПРАВЛЕНИЯ В БРАУЗЕРЕ */
+        #controlPanel {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 50, 50, 0.1);
-            pointer-events: none;
-            z-index: 2147483645;
-            animation: flash 0.5s ease-out;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 2px solid #0078d7;
+            border-radius: 10px;
+            padding: 20px;
+            width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
         }
         
-        @keyframes flash {
-            0% { opacity: 0; }
-            50% { opacity: 1; }
-            100% { opacity: 0; }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .panel-title {
+            color: #0078d7;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .config-group {
+            margin-bottom: 15px;
+        }
+        
+        .config-label {
+            display: block;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #e0e0e0;
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #0078d7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .btn {
+            background: #0078d7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #005a9e;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        /* ОКНО КАЛИБРОВКИ */
+        #calibrationWindow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 3px solid #28a745;
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 2000;
+            display: none;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .calibration-canvas {
+            width: 600px;
+            height: 400px;
+            border: 2px solid #333;
+            cursor: crosshair;
+            margin-bottom: 15px;
+        }
+        
+        .calibration-instruction {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        /* СТАТУС БАР В БРАУЗЕРЕ */
+        #statusBar {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 1000;
         }
         
         /* СКРЫТЫЕ ЭЛЕМЕНТЫ */
         .hidden {
             display: none !important;
         }
-        
-        /* АДАПТИВНОСТЬ */
-        @media (max-height: 800px) {
-            #radarContainer {
-                width: 150px;
-                height: 150px;
-                top: 10px;
-                right: 10px;
-            }
-            
-            #controlPanel {
-                width: 250px;
-                padding: 10px;
-            }
-        }
     </style>
 </head>
 <body>
-    <!-- ОСНОВНОЙ OVERLAY -->
-    <div id="gameOverlay">
-        <!-- РАДАР -->
-        <div id="radarContainer">
-            <div id="radar">
-                <div class="radarGrid"></div>
-                <div class="sweepLine"></div>
-                <!-- Враги добавляются через JS -->
-            </div>
-        </div>
+    <!-- БЕЛЫЙ ЭКРАН В БРАУЗЕРЕ -->
+    <div id="browserContent">
+        <h1 style="color: #0078d7; margin-bottom: 20px;">🖥️ System Performance Monitor</h1>
+        <p style="color: #666; max-width: 500px; margin-bottom: 30px;">
+            This utility monitors system performance and provides game optimization features.
+            Start screen capture to enable overlay features.
+        </p>
         
         <!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
         <div id="controlPanel">
             <div class="panel-header">
-                <div class="panel-title">🎮 Game Assistant Pro</div>
-                <button class="close-btn" onclick="togglePanel()">×</button>
+                <div class="panel-title">🎮 Game Assistant</div>
             </div>
             
             <div class="config-group">
-                <label class="config-label">🔴 Enemy Color:</label>
+                <label class="config-label">🔴 Enemy Color Detection:</label>
                 <div class="slider-container">
                     <input type="color" id="colorPicker" value="#ff0000" style="flex: 1; height: 30px;">
-                    <div class="color-preview" id="colorPreview" style="background: #ff0000;"></div>
+                    <div id="colorPreview" style="width: 30px; height: 30px; background: #ff0000; border-radius: 5px;"></div>
                 </div>
             </div>
             
             <div class="config-group">
-                <label class="config-label">🎯 Detection Sensitivity:</label>
-                <div class="slider-container">
-                    <input type="range" id="sensitivity" min="1" max="100" value="50">
-                    <div class="value-display" id="sensValue">50</div>
-                </div>
+                <label class="config-label">🎯 Detection Sensitivity: <span id="sensValue">50</span>%</label>
+                <input type="range" id="sensitivity" min="1" max="100" value="50" class="slider-container">
             </div>
             
             <div class="config-group">
-                <label class="config-label">📏 Outline Thickness:</label>
-                <div class="slider-container">
-                    <input type="range" id="outlineWidth" min="1" max="10" value="3">
-                    <div class="value-display" id="outlineValue">3px</div>
-                </div>
+                <label class="config-label">📏 Outline Thickness: <span id="outlineValue">3</span>px</label>
+                <input type="range" id="outlineWidth" min="1" max="10" value="3">
             </div>
             
-            <div class="config-group">
-                <label class="config-label">🌈 Outline Color:</label>
-                <div style="display: flex; gap: 10px; margin-top: 5px;">
-                    <button class="btn" onclick="setOutlineColor('red')" style="background: #ff3333;">Red</button>
-                    <button class="btn" onclick="setOutlineColor('orange')" style="background: #ff9900;">Orange</button>
-                    <button class="btn" onclick="setOutlineColor('yellow')" style="background: #ffff00; color: #000;">Yellow</button>
-                </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-success" onclick="startCapture()">🖥️ Start Screen Capture</button>
+                <button class="btn" onclick="showCalibration()">🎨 Calibrate Color</button>
+                <button class="btn btn-danger" onclick="stopCapture()">⏹️ Stop Capture</button>
             </div>
             
-            <div class="button-group">
-                <button class="btn btn-success" onclick="startCapture()">🖥️ Start Capture</button>
-                <button class="btn" onclick="calibrateColor()">🎨 Calibrate Color</button>
-                <button class="btn" onclick="toggleRadar()">📡 Toggle Radar</button>
-                <button class="btn" onclick="toggleOutlines()">🔲 Toggle Outlines</button>
-                <button class="btn btn-danger" onclick="resetAll()">🔄 Reset All</button>
+            <div style="margin-top: 15px; font-size: 12px; color: #666; text-align: center;">
+                Hotkeys: Ctrl+Shift+S (Start/Stop) | Ctrl+Shift+C (Calibrate)
             </div>
         </div>
         
         <!-- СТАТУС БАР -->
         <div id="statusBar">
-            ⏳ Ready - Press Ctrl+Shift+S to start capture
+            ⏳ Ready to start screen capture
+        </div>
+    </div>
+    
+    <!-- ОКНО КАЛИБРОВКИ (ПОКАЗЫВАЕТ СКРИНШОТ) -->
+    <div id="calibrationWindow">
+        <h3 style="color: #28a745; margin-bottom: 10px;">🎯 Color Calibration</h3>
+        <p class="calibration-instruction">Click on an enemy in the screenshot below to capture its color</p>
+        
+        <canvas id="calibrationCanvas" class="calibration-canvas"></canvas>
+        
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button class="btn btn-success" onclick="confirmCalibration()">✅ Confirm Color</button>
+            <button class="btn" onclick="hideCalibration()">❌ Cancel</button>
+        </div>
+    </div>
+    
+    <!-- OVERLAY ДЛЯ ИГРЫ (ВИДЕН ТОЛЬКО ПОВЕРХ ИГРЫ) -->
+    <div id="gameOverlay">
+        <!-- РАДАР -->
+        <div id="radarContainer">
+            <div id="radar">
+                <div class="sweepLine"></div>
+                <!-- Враги добавляются через JS -->
+            </div>
         </div>
         
         <!-- КРЕСТИК ПРИЦЕЛА -->
         <div id="crosshair">
             <div class="crosshair-dot"></div>
-            <div class="crosshair-line crosshair-h"></div>
-            <div class="crosshair-line crosshair-v"></div>
         </div>
         
         <!-- Обводки врагов добавляются через JS -->
     </div>
 
     <script>
-        // === КОНФИГУРАЦИЯ СИСТЕМЫ ===
+        // === КОНФИГУРАЦИЯ ===
         const CONFIG = {
-            // Цвет врага
-            enemyColor: { r: 255, g: 0, b: 0 },
+            enemyColor: { r: 255, g: 0, b: 0 }, // Красный по умолчанию
             colorThreshold: 40,
-            
-            // Чувствительность
             sensitivity: 50,
-            scanStep: 10, // Шаг сканирования (меньше = точнее, но медленнее)
-            
-            // Обводка
-            outlineEnabled: true,
             outlineWidth: 3,
-            outlineColor: 'red', // red, orange, yellow
-            outlineColors: {
-                red: '#ff3333',
-                orange: '#ff9900',
-                yellow: '#ffff00'
-            },
-            
-            // Радар
-            radarEnabled: true,
-            radarSize: 200,
-            showDistance: true,
-            
-            // Производительность
-            updateInterval: 100, // мс
-            maxEnemies: 10
+            updateInterval: 100,
+            maxEnemies: 8
         };
         
         // === СОСТОЯНИЕ СИСТЕМЫ ===
         const STATE = {
-            // Захват экрана
             isCapturing: false,
             screenStream: null,
             videoElement: null,
             canvas: null,
             ctx: null,
-            
-            // Враги
             enemies: [],
-            enemyOutlines: [],
-            
-            // Производительность
-            fps: 0,
-            frameCount: 0,
-            lastFpsUpdate: Date.now(),
-            
-            // Интервалы
-            scanInterval: null,
-            updateInterval: null,
-            
-            // UI состояние
-            panelVisible: true,
-            radarVisible: true,
-            outlinesVisible: true
+            outlines: [],
+            calibrationActive: false,
+            overlayVisible: false
         };
         
         // === ИНИЦИАЛИЗАЦИЯ ===
         document.addEventListener('DOMContentLoaded', () => {
             initializeSystem();
             setupEventListeners();
-            updateUIFromConfig();
+            setupHotkeys();
             
-            // Показываем инструкцию
-            setTimeout(() => {
-                showInstruction();
-            }, 1000);
+            console.log('System initialized. Overlay will appear on top of game when capturing.');
         });
         
         function initializeSystem() {
-            console.log('🔄 Initializing Game Assistant Pro...');
-            
             // Создаем скрытые элементы для анализа
             STATE.videoElement = document.createElement('video');
             STATE.canvas = document.createElement('canvas');
             STATE.ctx = STATE.canvas.getContext('2d', { willReadFrequently: true });
             
-            // Устанавливаем горячие клавиши
-            setupHotkeys();
-            
-            updateStatus('✅ System ready. Press Ctrl+Shift+S to start capture');
+            // Изначально скрываем overlay
+            document.getElementById('gameOverlay').style.display = 'none';
         }
         
         function setupEventListeners() {
@@ -615,32 +460,14 @@
             // Настройки чувствительности
             document.getElementById('sensitivity').addEventListener('input', (e) => {
                 CONFIG.sensitivity = parseInt(e.target.value);
-                CONFIG.scanStep = Math.max(2, 20 - Math.floor(CONFIG.sensitivity / 5));
                 document.getElementById('sensValue').textContent = CONFIG.sensitivity;
             });
             
             // Настройки обводки
             document.getElementById('outlineWidth').addEventListener('input', (e) => {
                 CONFIG.outlineWidth = parseInt(e.target.value);
-                document.getElementById('outlineValue').textContent = CONFIG.outlineWidth + 'px';
-                updateAllOutlines();
+                document.getElementById('outlineValue').textContent = CONFIG.outlineWidth;
             });
-            
-            // Перетаскивание панели
-            makeDraggable('controlPanel');
-            makeDraggable('radarContainer');
-        }
-        
-        function updateUIFromConfig() {
-            // Обновляем UI из конфига
-            document.getElementById('sensitivity').value = CONFIG.sensitivity;
-            document.getElementById('sensValue').textContent = CONFIG.sensitivity;
-            document.getElementById('outlineWidth').value = CONFIG.outlineWidth;
-            document.getElementById('outlineValue').textContent = CONFIG.outlineWidth + 'px';
-            
-            const hex = rgbToHex(CONFIG.enemyColor.r, CONFIG.enemyColor.g, CONFIG.enemyColor.b);
-            document.getElementById('colorPicker').value = hex;
-            document.getElementById('colorPreview').style.background = hex;
         }
         
         // === ЗАХВАТ ЭКРАНА ===
@@ -658,8 +485,7 @@
                     video: {
                         displaySurface: 'window',
                         width: { ideal: 1920 },
-                        height: { ideal: 1080 },
-                        frameRate: { ideal: 60, max: 60 }
+                        height: { ideal: 1080 }
                     },
                     audio: false,
                     preferCurrentTab: false
@@ -670,11 +496,13 @@
                 STATE.videoElement.autoplay = true;
                 STATE.videoElement.playsInline = true;
                 
-                // Ждем загрузки метаданных
                 STATE.videoElement.onloadedmetadata = () => {
                     // Устанавливаем размер canvas
                     STATE.canvas.width = STATE.videoElement.videoWidth;
                     STATE.canvas.height = STATE.videoElement.videoHeight;
+                    
+                    // АКТИВИРУЕМ OVERLAY НАД ИГРОЙ
+                    activateOverlay();
                     
                     updateStatus(`✅ Capturing: ${STATE.canvas.width}x${STATE.canvas.height}`);
                     STATE.isCapturing = true;
@@ -689,44 +517,45 @@
                     });
                 };
                 
-                // Обработка ошибок видео
-                STATE.videoElement.onerror = (e) => {
-                    console.error('Video error:', e);
-                    updateStatus('❌ Video error');
-                    stopCapture();
-                };
-                
             } catch (error) {
                 console.error('Capture error:', error);
                 updateStatus(`❌ Error: ${error.message}`);
                 
-                // Предлагаем решение
                 if (error.name === 'NotAllowedError') {
-                    showAlert(
-                        'Permission Required',
-                        'Please allow screen sharing when prompted.<br><br>' +
-                        '1. Refresh the page<br>' +
-                        '2. Click "Start Capture"<br>' +
-                        '3. Select your game window<br>' +
-                        '4. Click "Share"'
-                    );
+                    alert('Please allow screen sharing when prompted.\n\n' +
+                          '1. Refresh the page\n' +
+                          '2. Click "Start Screen Capture"\n' +
+                          '3. Select your game window\n' +
+                          '4. Click "Share"');
                 }
             }
+        }
+        
+        function activateOverlay() {
+            // ДОБАВЛЯЕМ КЛАСС ДЛЯ АКТИВАЦИИ OVERLAY
+            document.body.classList.add('overlay-visible');
+            
+            // БРАУЗЕР СТАНОВИТСЯ БЕЛЫМ, OVERLAY ПОКАЗЫВАЕТСЯ ПОВЕРХ ИГРЫ
+            STATE.overlayVisible = true;
+            
+            console.log('Overlay activated. ESP visible on top of game.');
+        }
+        
+        function deactivateOverlay() {
+            // УБИРАЕМ КЛАСС ДЛЯ ДЕАКТИВАЦИИ OVERLAY
+            document.body.classList.remove('overlay-visible');
+            
+            // БРАУЗЕР ВОЗВРАЩАЕТСЯ К НОРМАЛЬНОМУ ВИДУ
+            STATE.overlayVisible = false;
+            
+            console.log('Overlay deactivated.');
         }
         
         function stopCapture() {
             STATE.isCapturing = false;
             
-            // Останавливаем интервалы
-            if (STATE.scanInterval) {
-                clearInterval(STATE.scanInterval);
-                STATE.scanInterval = null;
-            }
-            
-            if (STATE.updateInterval) {
-                clearInterval(STATE.updateInterval);
-                STATE.updateInterval = null;
-            }
+            // Деактивируем overlay
+            deactivateOverlay();
             
             // Останавливаем захват
             if (STATE.screenStream) {
@@ -737,48 +566,40 @@
             // Очищаем врагов
             clearEnemies();
             
-            updateStatus('⏸️ Capture stopped');
+            updateStatus('⏸️ Screen capture stopped');
         }
         
-        // === АНАЛИЗ ИГРЫ ===
+        // === АНАЛИЗ И ОТОБРАЖЕНИЕ ===
         function startAnalysis() {
-            // Основной цикл анализа
-            STATE.scanInterval = setInterval(() => {
-                if (!STATE.isCapturing || !STATE.videoElement) return;
-                
-                // Обновляем FPS
-                updateFPS();
+            // Интервал анализа
+            const analysisInterval = setInterval(() => {
+                if (!STATE.isCapturing) {
+                    clearInterval(analysisInterval);
+                    return;
+                }
                 
                 try {
-                    // Рисуем текущий кадр на canvas
-                    STATE.ctx.drawImage(
-                        STATE.videoElement, 
-                        0, 0, 
-                        STATE.canvas.width, 
-                        STATE.canvas.height
-                    );
+                    // Рисуем кадр на canvas
+                    STATE.ctx.drawImage(STATE.videoElement, 0, 0, 
+                        STATE.canvas.width, STATE.canvas.height);
                     
                     // Получаем данные изображения
                     const imageData = STATE.ctx.getImageData(
-                        0, 0, 
-                        STATE.canvas.width, 
-                        STATE.canvas.height
+                        0, 0, STATE.canvas.width, STATE.canvas.height
                     );
                     
                     // Ищем врагов
                     scanForEnemies(imageData);
+                    
+                    // Обновляем отображение
+                    updateRadar();
+                    updateOutlines();
                     
                 } catch (error) {
                     console.warn('Analysis error:', error);
                 }
                 
             }, CONFIG.updateInterval);
-            
-            // Интервал обновления UI
-            STATE.updateInterval = setInterval(() => {
-                updateRadar();
-                updateOutlines();
-            }, 50); // 20 FPS для UI
         }
         
         function scanForEnemies(imageData) {
@@ -788,11 +609,11 @@
             
             const targetColor = CONFIG.enemyColor;
             const threshold = CONFIG.colorThreshold;
-            const step = CONFIG.scanStep;
+            const step = Math.max(2, 20 - Math.floor(CONFIG.sensitivity / 5));
             
             const enemyPixels = [];
             
-            // Быстрое сканирование с шагом
+            // Быстрое сканирование
             for (let y = 0; y < height; y += step) {
                 for (let x = 0; x < width; x += step) {
                     const index = (y * width + x) * 4;
@@ -801,405 +622,201 @@
                     const g = data[index + 1];
                     const b = data[index + 2];
                     
-                    // Проверка на целевой цвет
-                    const colorDiff = 
-                        Math.abs(r - targetColor.r) + 
-                        Math.abs(g - targetColor.g) + 
-                        Math.abs(b - targetColor.b);
+                    const colorDiff = Math.abs(r - targetColor.r) + 
+                                     Math.abs(g - targetColor.g) + 
+                                     Math.abs(b - targetColor.b);
                     
                     if (colorDiff < threshold) {
-                        enemyPixels.push({ x, y, r, g, b });
+                        enemyPixels.push({ x, y });
                     }
                 }
             }
             
-            // Кластеризация пикселей во врагов
-            if (enemyPixels.length > 0) {
-                STATE.enemies = clusterEnemies(enemyPixels);
-                
-                // Ограничиваем количество врагов
-                if (STATE.enemies.length > CONFIG.maxEnemies) {
-                    STATE.enemies = STATE.enemies.slice(0, CONFIG.maxEnemies);
-                }
-                
-                // Анимация обнаружения
-                if (STATE.enemies.length > 0 && STATE.frameCount % 10 === 0) {
-                    flashDetection();
-                }
-            } else {
-                STATE.enemies = [];
+            // Кластеризация
+            STATE.enemies = clusterPixels(enemyPixels);
+            
+            // Ограничиваем количество
+            if (STATE.enemies.length > CONFIG.maxEnemies) {
+                STATE.enemies = STATE.enemies.slice(0, CONFIG.maxEnemies);
             }
         }
         
-        function clusterEnemies(pixels) {
+        function clusterPixels(pixels) {
+            if (pixels.length === 0) return [];
+            
             const clusters = [];
-            const clusterDistance = 80; // Макс расстояние для объединения в кластер
+            const clusterDistance = 50;
             
             for (const pixel of pixels) {
-                let addedToCluster = false;
+                let added = false;
                 
                 for (const cluster of clusters) {
+                    const center = cluster.center;
                     const dist = Math.sqrt(
-                        Math.pow(pixel.x - cluster.center.x, 2) + 
-                        Math.pow(pixel.y - cluster.center.y, 2)
+                        Math.pow(pixel.x - center.x, 2) + 
+                        Math.pow(pixel.y - center.y, 2)
                     );
                     
                     if (dist < clusterDistance) {
                         cluster.pixels.push(pixel);
-                        
-                        // Пересчитываем центр
-                        cluster.center.x = cluster.pixels.reduce((sum, p) => sum + p.x, 0) / cluster.pixels.length;
-                        cluster.center.y = cluster.pixels.reduce((sum, p) => sum + p.y, 0) / cluster.pixels.length;
-                        
-                        // Обновляем средний цвет
-                        cluster.color.r = cluster.pixels.reduce((sum, p) => sum + p.r, 0) / cluster.pixels.length;
-                        cluster.color.g = cluster.pixels.reduce((sum, p) => sum + p.g, 0) / cluster.pixels.length;
-                        cluster.color.b = cluster.pixels.reduce((sum, p) => sum + p.b, 0) / cluster.pixels.length;
-                        
-                        addedToCluster = true;
+                        cluster.center.x = cluster.pixels.reduce((s, p) => s + p.x, 0) / cluster.pixels.length;
+                        cluster.center.y = cluster.pixels.reduce((s, p) => s + p.y, 0) / cluster.pixels.length;
+                        added = true;
                         break;
                     }
                 }
                 
-                if (!addedToCluster) {
+                if (!added) {
                     clusters.push({
                         pixels: [pixel],
-                        center: { x: pixel.x, y: pixel.y },
-                        color: { r: pixel.r, g: pixel.g, b: pixel.b },
-                        size: 1
+                        center: { x: pixel.x, y: pixel.y }
                     });
                 }
             }
             
-            // Фильтруем маленькие кластеры (шум)
-            return clusters.filter(cluster => 
-                cluster.pixels.length > (CONFIG.sensitivity / 10)
-            ).map(cluster => ({
-                x: Math.round(cluster.center.x),
-                y: Math.round(cluster.center.y),
-                width: Math.max(20, Math.sqrt(cluster.pixels.length) * 5),
-                height: Math.max(20, Math.sqrt(cluster.pixels.length) * 5),
-                color: cluster.color,
-                distance: calculateDistance(cluster.center.x, cluster.center.y)
+            // Фильтруем шум
+            return clusters.filter(c => 
+                c.pixels.length > (CONFIG.sensitivity / 10)
+            ).map(c => ({
+                x: Math.round(c.center.x),
+                y: Math.round(c.center.y),
+                width: Math.max(20, Math.sqrt(c.pixels.length) * 5),
+                height: Math.max(20, Math.sqrt(c.pixels.length) * 5)
             }));
         }
         
-        function calculateDistance(x, y) {
-            // Расстояние от центра экрана
-            const centerX = STATE.canvas.width / 2;
-            const centerY = STATE.canvas.height / 2;
+        function updateRadar() {
+            const radar = document.getElementById('radar');
             
-            const dist = Math.sqrt(
-                Math.pow(x - centerX, 2) + 
-                Math.pow(y - centerY, 2)
-            );
+            // Очищаем старых врагов
+            const oldElements = radar.querySelectorAll('.radarEnemy');
+            oldElements.forEach(el => el.remove());
             
-            // Нормализуем к 0-100
-            const maxDist = Math.sqrt(
-                Math.pow(STATE.canvas.width, 2) + 
-                Math.pow(STATE.canvas.height, 2)
-            ) / 2;
-            
-            return Math.round((dist / maxDist) * 100);
-        }
-        
-        // === ОБВОДКА ВРАГОВ ===
-        function updateOutlines() {
-            if (!CONFIG.outlineEnabled || !STATE.outlinesVisible) {
-                clearOutlines();
-                return;
-            }
-            
-            // Удаляем старые обводки
-            clearOutlines();
-            
-            // Создаем новые обводки для каждого врага
+            // Добавляем новых врагов
             STATE.enemies.forEach((enemy, index) => {
-                createEnemyOutline(enemy, index);
+                // Конвертируем координаты
+                const radarX = (enemy.x / STATE.canvas.width) * 100;
+                const radarY = (enemy.y / STATE.canvas.height) * 100;
+                
+                const boundedX = Math.max(5, Math.min(95, radarX));
+                const boundedY = Math.max(5, Math.min(95, radarY));
+                
+                // Создаем точку врага
+                const enemyDot = document.createElement('div');
+                enemyDot.className = 'radarEnemy';
+                enemyDot.style.left = `${boundedX}%`;
+                enemyDot.style.top = `${boundedY}%`;
+                enemyDot.style.animationDelay = `${index * 0.1}s`;
+                
+                radar.appendChild(enemyDot);
             });
         }
         
-        function createEnemyOutline(enemy, id) {
+        function updateOutlines() {
+            // Удаляем старые обводки
+            clearOutlines();
+            
+            // Создаем новые обводки
+            STATE.enemies.forEach((enemy, index) => {
+                createOutline(enemy, index);
+            });
+        }
+        
+        function createOutline(enemy, id) {
             const outline = document.createElement('div');
-            outline.className = `enemyOutline outline-${CONFIG.outlineColor}`;
-            outline.id = `enemyOutline_${id}`;
+            outline.className = 'enemyOutline';
+            outline.id = `outline_${id}`;
             
             // Позиция и размер
-            const padding = 5; // Небольшой отступ
+            const padding = 5;
             outline.style.left = `${enemy.x - enemy.width/2 - padding}px`;
             outline.style.top = `${enemy.y - enemy.height/2 - padding}px`;
             outline.style.width = `${enemy.width + padding*2}px`;
             outline.style.height = `${enemy.height + padding*2}px`;
             
-            // Создаем рамку
+            // Рамка
             const box = document.createElement('div');
-            box.className = `outline-box outline-${CONFIG.outlineColor}`;
+            box.className = 'outline-box';
             box.style.borderWidth = `${CONFIG.outlineWidth}px`;
-            box.style.borderColor = CONFIG.outlineColors[CONFIG.outlineColor];
             box.style.width = '100%';
             box.style.height = '100%';
             
-            // Метка с расстоянием
-            if (CONFIG.showDistance) {
-                const label = document.createElement('div');
-                label.className = 'enemyLabel label-red';
-                label.textContent = `ENEMY ${enemy.distance}m`;
-                label.style.top = `${-25}px`;
-                label.style.left = '50%';
-                outline.appendChild(label);
-                
-                // Дистанция под обводкой
-                const distance = document.createElement('div');
-                distance.className = 'label-distance';
-                distance.textContent = `${enemy.distance}m`;
-                distance.style.top = `${enemy.height + padding*2 + 5}px`;
-                distance.style.left = '50%';
-                outline.appendChild(distance);
-            }
-            
             outline.appendChild(box);
             document.getElementById('gameOverlay').appendChild(outline);
-            STATE.enemyOutlines.push(outline);
+            STATE.outlines.push(outline);
         }
         
         function clearOutlines() {
-            STATE.enemyOutlines.forEach(outline => {
+            STATE.outlines.forEach(outline => {
                 if (outline && outline.parentNode) {
                     outline.parentNode.removeChild(outline);
                 }
             });
-            STATE.enemyOutlines = [];
-        }
-        
-        function updateAllOutlines() {
-            clearOutlines();
-            updateOutlines();
-        }
-        
-        // === РАДАР ===
-        function updateRadar() {
-            if (!CONFIG.radarEnabled || !STATE.radarVisible) {
-                clearRadar();
-                return;
-            }
-            
-            // Очищаем радар
-            clearRadar();
-            
-            // Добавляем врагов на радар
-            STATE.enemies.forEach((enemy, index) => {
-                addEnemyToRadar(enemy, index);
-            });
-            
-            // Обновляем статус
-            const status = document.getElementById('statusBar');
-            if (STATE.enemies.length > 0) {
-                status.innerHTML = `🎯 ${STATE.enemies.length} enemies detected | FPS: ${STATE.fps}`;
-                status.style.background = 'rgba(255, 50, 50, 0.8)';
-            } else {
-                status.innerHTML = `✅ No enemies | FPS: ${STATE.fps}`;
-                status.style.background = 'rgba(0, 0, 0, 0.8)';
-            }
-        }
-        
-        function addEnemyToRadar(enemy, index) {
-            const radar = document.getElementById('radar');
-            
-            // Конвертируем координаты экрана в координаты радара
-            const radarX = (enemy.x / STATE.canvas.width) * 100;
-            const radarY = (enemy.y / STATE.canvas.height) * 100;
-            
-            // Ограничиваем в пределах радара
-            const boundedX = Math.max(5, Math.min(95, radarX));
-            const boundedY = Math.max(5, Math.min(95, radarY));
-            
-            // Точка врага
-            const enemyDot = document.createElement('div');
-            enemyDot.className = 'radarEnemy';
-            enemyDot.style.left = `${boundedX}%`;
-            enemyDot.style.top = `${boundedY}%`;
-            enemyDot.style.animationDelay = `${index * 0.1}s`;
-            
-            // Линия к врагу от центра
-            const line = document.createElement('div');
-            line.className = 'radarLine';
-            line.style.left = '50%';
-            line.style.top = '50%';
-            
-            const dx = boundedX - 50;
-            const dy = boundedY - 50;
-            const length = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-            
-            line.style.width = `${length}%`;
-            line.style.transform = `rotate(${angle}deg)`;
-            
-            // Информация о враге
-            const info = document.createElement('div');
-            info.className = 'enemyInfo';
-            info.textContent = `${enemy.distance}m`;
-            info.style.left = `${boundedX}%`;
-            info.style.top = `${boundedY - 15}%`;
-            
-            radar.appendChild(line);
-            radar.appendChild(enemyDot);
-            radar.appendChild(info);
-        }
-        
-        function clearRadar() {
-            const radar = document.getElementById('radar');
-            const elements = radar.querySelectorAll('.radarLine, .radarEnemy, .enemyInfo');
-            elements.forEach(el => el.remove());
+            STATE.outlines = [];
         }
         
         function clearEnemies() {
             STATE.enemies = [];
-            clearRadar();
+            updateRadar();
             clearOutlines();
         }
         
-        // === КАЛИБРОВКА ЦВЕТА ===
-        function calibrateColor() {
+        // === КАЛИБРОВКА ===
+        function showCalibration() {
             if (!STATE.isCapturing) {
-                showAlert('Error', 'Start screen capture first!');
+                alert('Start screen capture first!');
                 return;
             }
             
-            updateStatus('🎨 Calibration - Click on an enemy');
+            STATE.calibrationActive = true;
             
-            // Создаем окно калибровки
-            const calibrator = document.createElement('div');
-            calibrator.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 600px;
-                height: 400px;
-                background: rgba(0, 0, 0, 0.95);
-                border: 3px solid #00ff9d;
-                z-index: 2147483647;
-                cursor: crosshair;
-                border-radius: 10px;
-                overflow: hidden;
-            `;
+            // Показываем окно калибровки
+            const calibrationWindow = document.getElementById('calibrationWindow');
+            const canvas = document.getElementById('calibrationCanvas');
+            const ctx = canvas.getContext('2d');
             
-            const canvas = document.createElement('canvas');
+            // Устанавливаем размер canvas
             canvas.width = 600;
             canvas.height = 400;
-            calibrator.appendChild(canvas);
             
-            const ctx = canvas.getContext('2d');
+            // Рисуем текущий скриншот игры
             ctx.drawImage(STATE.videoElement, 0, 0, 600, 400);
             
-            // Инструкция
-            const instruction = document.createElement('div');
-            instruction.style.cssText = `
-                position: absolute;
-                bottom: 10px;
-                left: 0;
-                width: 100%;
-                text-align: center;
-                color: #00ff9d;
-                font-size: 14px;
-                background: rgba(0, 0, 0, 0.7);
-                padding: 10px;
-            `;
-            instruction.textContent = 'Click on an enemy to capture its color';
-            calibrator.appendChild(instruction);
+            // Показываем окно
+            calibrationWindow.style.display = 'block';
             
-            // Обработка клика
-            canvas.addEventListener('click', (e) => {
+            // Обработка клика по canvas
+            canvas.onclick = (e) => {
                 const rect = canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 
+                // Получаем цвет пикселя
                 const pixel = ctx.getImageData(x, y, 1, 1).data;
                 const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
                 
-                // Обновляем цвет
+                // Обновляем цвет в настройках
                 updateColorFromRGB(pixel[0], pixel[1], pixel[2]);
+                document.getElementById('colorPicker').value = hex;
+                document.getElementById('colorPreview').style.background = hex;
                 
-                // Показываем выбранный цвет
-                ctx.strokeStyle = '#00ff9d';
-                ctx.lineWidth = 3;
+                // Показываем метку выбора
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 2;
                 ctx.strokeRect(x - 10, y - 10, 20, 20);
                 
-                // Цветовой круг
-                ctx.beginPath();
-                ctx.arc(x, y, 15, 0, Math.PI * 2);
-                ctx.strokeStyle = hex;
-                ctx.lineWidth = 5;
-                ctx.stroke();
-                
-                updateStatus(`✅ Color set to RGB(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`);
-                
-                setTimeout(() => {
-                    calibrator.remove();
-                    updateStatus('✅ Calibration complete');
-                }, 1500);
-            });
-            
-            // Кнопка отмены
-            const cancelBtn = document.createElement('button');
-            cancelBtn.textContent = 'Cancel';
-            cancelBtn.style.cssText = `
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                padding: 5px 15px;
-                background: #ff3333;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            `;
-            cancelBtn.onclick = () => {
-                calibrator.remove();
-                updateStatus('Calibration cancelled');
+                updateStatus(`🎯 Color set: RGB(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`);
             };
-            calibrator.appendChild(cancelBtn);
-            
-            document.body.appendChild(calibrator);
         }
         
-        // === УПРАВЛЕНИЕ UI ===
-        function togglePanel() {
-            STATE.panelVisible = !STATE.panelVisible;
-            document.getElementById('controlPanel').classList.toggle('hidden');
+        function hideCalibration() {
+            STATE.calibrationActive = false;
+            document.getElementById('calibrationWindow').style.display = 'none';
         }
         
-        function toggleRadar() {
-            STATE.radarVisible = !STATE.radarVisible;
-            document.getElementById('radarContainer').classList.toggle('hidden');
-            updateStatus(STATE.radarVisible ? '📡 Radar enabled' : '📡 Radar disabled');
-        }
-        
-        function toggleOutlines() {
-            STATE.outlinesVisible = !STATE.outlinesVisible;
-            if (!STATE.outlinesVisible) {
-                clearOutlines();
-            }
-            updateStatus(STATE.outlinesVisible ? '🔲 Outlines enabled' : '🔲 Outlines disabled');
-        }
-        
-        function setOutlineColor(color) {
-            CONFIG.outlineColor = color;
-            updateAllOutlines();
-            updateStatus(`🌈 Outline color set to ${color}`);
-        }
-        
-        function resetAll() {
-            if (confirm('Reset all settings to default?')) {
-                CONFIG.enemyColor = { r: 255, g: 0, b: 0 };
-                CONFIG.sensitivity = 50;
-                CONFIG.outlineWidth = 3;
-                CONFIG.outlineColor = 'red';
-                
-                updateUIFromConfig();
-                updateAllOutlines();
-                updateStatus('🔄 All settings reset to default');
-            }
+        function confirmCalibration() {
+            hideCalibration();
+            updateStatus('✅ Color calibration complete');
         }
         
         // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
@@ -1213,76 +830,14 @@
         
         function updateColorFromRGB(r, g, b) {
             CONFIG.enemyColor = { r, g, b };
-            
-            const hex = rgbToHex(r, g, b);
-            document.getElementById('colorPicker').value = hex;
-            document.getElementById('colorPreview').style.background = hex;
         }
         
         function rgbToHex(r, g, b) {
             return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
         }
         
-        function updateFPS() {
-            STATE.frameCount++;
-            const now = Date.now();
-            
-            if (now - STATE.lastFpsUpdate >= 1000) {
-                STATE.fps = STATE.frameCount;
-                STATE.frameCount = 0;
-                STATE.lastFpsUpdate = now;
-            }
-        }
-        
         function updateStatus(message) {
-            const status = document.getElementById('statusBar');
-            status.innerHTML = message;
-        }
-        
-        function flashDetection() {
-            const flash = document.createElement('div');
-            flash.className = 'detection-flash';
-            document.getElementById('gameOverlay').appendChild(flash);
-            
-            setTimeout(() => {
-                if (flash.parentNode) {
-                    flash.parentNode.removeChild(flash);
-                }
-            }, 500);
-        }
-        
-        function makeDraggable(elementId) {
-            const element = document.getElementById(elementId);
-            let isDragging = false;
-            let offsetX, offsetY;
-            
-            element.addEventListener('mousedown', startDrag);
-            
-            function startDrag(e) {
-                isDragging = true;
-                offsetX = e.clientX - element.getBoundingClientRect().left;
-                offsetY = e.clientY - element.getBoundingClientRect().top;
-                
-                document.addEventListener('mousemove', drag);
-                document.addEventListener('mouseup', stopDrag);
-                
-                e.preventDefault();
-            }
-            
-            function drag(e) {
-                if (!isDragging) return;
-                
-                element.style.left = (e.clientX - offsetX) + 'px';
-                element.style.top = (e.clientY - offsetY) + 'px';
-                element.style.right = 'auto';
-                element.style.bottom = 'auto';
-            }
-            
-            function stopDrag() {
-                isDragging = false;
-                document.removeEventListener('mousemove', drag);
-                document.removeEventListener('mouseup', stopDrag);
-            }
+            document.getElementById('statusBar').textContent = message;
         }
         
         function setupHotkeys() {
@@ -1290,91 +845,21 @@
                 // Ctrl+Shift+S - Start/Stop capture
                 if (e.ctrlKey && e.shiftKey && e.key === 'S') {
                     e.preventDefault();
-                    startCapture();
-                }
-                
-                // Ctrl+Shift+R - Toggle radar
-                if (e.ctrlKey && e.shiftKey && e.key === 'R') {
-                    e.preventDefault();
-                    toggleRadar();
-                }
-                
-                // Ctrl+Shift+O - Toggle outlines
-                if (e.ctrlKey && e.shiftKey && e.key === 'O') {
-                    e.preventDefault();
-                    toggleOutlines();
-                }
-                
-                // Ctrl+Shift+H - Hide/show panel
-                if (e.ctrlKey && e.shiftKey && e.key === 'H') {
-                    e.preventDefault();
-                    togglePanel();
+                    if (STATE.isCapturing) stopCapture();
+                    else startCapture();
                 }
                 
                 // Ctrl+Shift+C - Calibrate
                 if (e.ctrlKey && e.shiftKey && e.key === 'C') {
                     e.preventDefault();
-                    calibrateColor();
+                    if (STATE.isCapturing) showCalibration();
+                }
+                
+                // Esc - Hide calibration
+                if (e.key === 'Escape' && STATE.calibrationActive) {
+                    hideCalibration();
                 }
             });
-        }
-        
-        function showAlert(title, message) {
-            const alert = document.createElement('div');
-            alert.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(10, 15, 30, 0.95);
-                color: #00ff9d;
-                padding: 20px;
-                border-radius: 10px;
-                border: 2px solid #00a8ff;
-                z-index: 2147483647;
-                min-width: 300px;
-                text-align: center;
-            `;
-            
-            alert.innerHTML = `
-                <h3 style="margin-bottom: 10px;">${title}</h3>
-                <div style="margin-bottom: 15px;">${message}</div>
-                <button onclick="this.parentElement.remove()" 
-                        style="padding: 8px 20px; background: #00a8ff; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    OK
-                </button>
-            `;
-            
-            document.body.appendChild(alert);
-        }
-        
-        function showInstruction() {
-            showAlert(
-                '🎮 Game Assistant Pro - Instructions',
-                `
-                <div style="text-align: left; font-size: 12px; line-height: 1.5;">
-                    <strong>QUICK START:</strong><br>
-                    1. Set game to <strong>Windowed/Borderless</strong><br>
-                    2. Press <strong>Ctrl+Shift+S</strong> to start<br>
-                    3. Select game window when prompted<br>
-                    4. Click <strong>Calibrate</strong> and click on enemy<br>
-                    5. Adjust settings as needed<br><br>
-                    
-                    <strong>HOTKEYS:</strong><br>
-                    • Ctrl+Shift+S = Start/Stop capture<br>
-                    • Ctrl+Shift+R = Toggle radar<br>
-                    • Ctrl+Shift+O = Toggle outlines<br>
-                    • Ctrl+Shift+H = Hide/show panel<br>
-                    • Ctrl+Shift+C = Calibrate color<br><br>
-                    
-                    <strong>TIPS:</strong><br>
-                    • Drag panels to reposition<br>
-                    • Adjust sensitivity for performance<br>
-                    • Use calibrate for best accuracy<br>
-                    • Toggle elements to reduce clutter
-                </div>
-                `
-            );
         }
         
         // === ОЧИСТКА ПРИ ЗАКРЫТИИ ===
@@ -1382,8 +867,6 @@
             stopCapture();
             clearEnemies();
         });
-        
-        console.log('🎮 Game Assistant Pro loaded successfully!');
     </script>
 </body>
 </html>
