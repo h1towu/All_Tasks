@@ -53,13 +53,6 @@ class Buyer:
     def show_info(self):
         return f'{self.name} {self.money} {self.fruits}'
 
-fruit1 = Fruit('яблоко', 'красный', 5, '1кг')
-print(fruit1.show_info())
+fruit1 = Fruit("Яблоко", "красный", 8, 1)
 
-buyer1 = Buyer('Егор', 50, [])
-print(buyer1.show_info())
-
-buyer1.buy(fruit1)
-
-print(buyer1.show_info())
-print(buyer1.sum())
+print(fruit1.Fruit)
