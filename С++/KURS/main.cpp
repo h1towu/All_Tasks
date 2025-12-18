@@ -97,7 +97,7 @@ public:
         int quantity;
         double price;
 
-        cout << "\n=== ВЫБОР ТИПА ТОВАРА ===" << endl;
+        cout << "\nВЫБОР ТИПА ТОВАРА" << endl;
         cout << "1. Обычный товар" << endl;
         cout << "2. Весовой товар" << endl;
         cout << "3. Хрупкий товар" << endl;
@@ -143,17 +143,17 @@ public:
         }
 
         default:
-            cout << "Неверный тип товара! Добавлен обычный товар." << endl;
+            cout << "Неверный тип товара. Добавлен обычный товар." << endl;
             products.push_back(new Product(name, quantity, price));
             break;
         }
 
-        cout << "Товар добавлен!" << endl;
+        cout << "Товар добавлен" << endl;
     }
 
     void removeProduct() {
         if (products.empty()) {
-            cout << "Склад пуст!" << endl;
+            cout << "Склад пуст" << endl;
             return;
         }
 
@@ -179,7 +179,7 @@ public:
             return;
         }
 
-        cout << "\n=== СПИСОК ТОВАРОВ ===" << endl;
+        cout << "\nСПИСОК ТОВАРОВ" << endl;
         // ПОЛИМОРФИЗМ: вызов метода display для объектов разных типов
         for (size_t i = 0; i < products.size(); i++) {
             cout << i + 1 << ". ";
@@ -233,7 +233,7 @@ public:
         }
 
         file.close();
-        cout << "Данные загружены!" << endl;
+        cout << "Данные загружены" << endl;
     }
 };
 
@@ -246,7 +246,7 @@ int main() {
     int choice = 0;
 
     do {
-        cout << "\n=== СИСТЕМА СКЛАДСКОГО УЧЕТА ===" << endl;
+        cout << "\nСИСТЕМА СКЛАДСКОГО УЧЕТА" << endl;
         cout << "1. Добавить товар" << endl;
         cout << "2. Удалить товар" << endl;
         cout << "3. Показать товары" << endl;
@@ -274,7 +274,7 @@ int main() {
             break;
 
         default:
-            cout << "Неверный выбор!" << endl;
+            cout << "Неверный выбор" << endl;
         }
 
     } while (choice != 4);
