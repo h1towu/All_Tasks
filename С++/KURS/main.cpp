@@ -166,10 +166,10 @@ public:
         if (index >= 1 && index <= products.size()) {
             delete products[index - 1];
             products.erase(products.begin() + (index - 1));
-            cout << "Товар удален!" << endl;
+            cout << "Товар удален" << endl;
         }
         else {
-            cout << "Неверный номер!" << endl;
+            cout << "Неверный номер" << endl;
         }
     }
 
@@ -192,7 +192,7 @@ public:
         ofstream file(filename);
 
         if (!file.is_open()) {
-            cout << "Ошибка при сохранении данных!" << endl;
+            cout << "Ошибка при сохранении данных" << endl;
             return;
         }
 
