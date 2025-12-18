@@ -22,12 +22,12 @@ public:
         cout << "Товар: " << name << ", Количество: " << quantity << ", Цена: " << price << " руб." << endl;
     }
 
-    // Геттеры
+    // геттеры
     string getName() const { return name; }
     int getQuantity() const { return quantity; }
     double getPrice() const { return price; }
 
-    // Сеттеры
+    // сеттеры
     void setQuantity(int q) { quantity = q; }
     void setPrice(double p) { price = p; }
 
@@ -75,7 +75,7 @@ public:
     string getPackagingType() const { return packagingType; }
 };
 
-// Класс для управления складом
+
 class Warehouse {
 private:
     // ИНКАПСУЛЯЦИЯ: вектор товаров скрыт внутри класса
@@ -151,7 +151,6 @@ public:
         cout << "Товар добавлен!" << endl;
     }
 
-    // Удаление товара
     void removeProduct() {
         if (products.empty()) {
             cout << "Склад пуст!" << endl;
@@ -174,7 +173,6 @@ public:
         }
     }
 
-    // Показать все товары
     void showProducts() const {
         if (products.empty()) {
             cout << "Склад пуст!" << endl;
@@ -185,12 +183,11 @@ public:
         // ПОЛИМОРФИЗМ: вызов метода display для объектов разных типов
         for (size_t i = 0; i < products.size(); i++) {
             cout << i + 1 << ". ";
-            products[i]->display(); // Вызовется правильная версия display()
+            products[i]->display();
         }
         cout << "====================\n" << endl;
     }
 
-    // Автоматическое сохранение в файл
     void saveToFile() {
         ofstream file(filename);
 
@@ -210,7 +207,6 @@ public:
         file.close();
     }
 
-    // Автоматическое чтение из файла
     void loadFromFile() {
         ifstream file(filename);
 
@@ -219,7 +215,6 @@ public:
             return;
         }
 
-        // Очищаем текущие товары
         for (auto product : products) {
             delete product;
         }
@@ -242,12 +237,10 @@ public:
     }
 };
 
-// Главная функция
 int main() {
 
     Warehouse warehouse;
 
-    // Загружаем данные при запуске
     warehouse.loadFromFile();
 
     int choice = 0;
@@ -264,12 +257,12 @@ int main() {
         switch (choice) {
         case 1:
             warehouse.addProduct();
-            warehouse.saveToFile(); // Автоматическое сохранение
+            warehouse.saveToFile(); 
             break;
 
         case 2:
             warehouse.removeProduct();
-            warehouse.saveToFile(); // Автоматическое сохранение
+            warehouse.saveToFile(); 
             break;
 
         case 3:
