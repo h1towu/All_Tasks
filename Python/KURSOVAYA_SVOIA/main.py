@@ -16,6 +16,7 @@ class WarehouseSystem:
         item = WarehouseItem(name, quantity, price)
         self.items.append(item)
         print("\nТовар успешно добавлен!")
+        
     def remove_item(self):
         name = input("\nВведите название товара, который вы хотите удалить: ")
         for item in self.items:
